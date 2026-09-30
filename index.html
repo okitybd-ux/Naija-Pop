@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Naija Pop - Bubble Shooter</title>
+  <meta name="description" content="Vibrant mobile-first bubble shooter game with 50 levels, power-ups, Nigerian themes, and smooth 60fps arcade action." />
+  <meta property="og:title" content="Naija Pop - Bubble Shooter" />
+  <meta property="og:description" content="Vibrant mobile-first bubble shooter game with 50 levels, power-ups, Nigerian themes, and smooth 60fps arcade action." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Game Canvas Viewport -->
+    <div id="canvas-wrap">
+      <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- Active Gameplay HUD -->
+    <header id="hud-overlay">
+      <div class="hud-stat-box hud-interactive" id="btn-pause" title="Pause Game">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+      </div>
+
+      <!-- Score & Stars Meter -->
+      <div class="hud-stat-box" style="flex-direction: column; align-items: flex-start; gap: 2px; padding: 4px 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100px;">
+          <span style="font-size: 10px; color: #94a3b8; text-transform: uppercase;">Score</span>
+          <div id="hud-stars" style="display: flex; gap: 2px; font-size: 11px;">
+            <span class="star-empty" id="hud-star-1">★</span>
+            <span class="star-empty" id="hud-star-2">★</span>
+            <span class="star-empty" id="hud-star-3">★</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 4px;">
+          <span id="hud-score" style="font-size: 15px; font-weight: 900; color: #facc15;">0</span>
+          <span id="hud-target-sub" style="font-size: 9px; color: #64748b;">/ 1500</span>
+        </div>
+      </div>
+
+      <!-- Shots Remaining Counter -->
+      <div class="hud-shots-pill">
+        <span class="hud-shots-num" id="hud-shots">25</span>
+        <span class="hud-shots-lbl">Shots</span>
+      </div>
+
+      <!-- Current Level Badge -->
+      <div class="hud-stat-box">
+        <span style="color: #6ee7b7; font-size: 11px; text-transform: uppercase;">LVL</span>
+        <span id="hud-level-num" style="font-size: 14px; font-weight: 900;">1</span>
+      </div>
+    </header>
+
+    <!-- In-Game Power-Up Tray (Bottom) -->
+    <div id="powerup-tray">
+      <!-- Bomb Bubble -->
+      <div class="powerup-btn" id="btn-powerup-bomb" title="Oya Bomb!">
+        <span class="powerup-icon">💣</span>
+        <span class="powerup-count" id="count-powerup-bomb">3</span>
+      </div>
+
+      <!-- Center Swap Hint Button -->
+      <div class="powerup-btn" id="btn-swap-bubble" style="width: 44px; height: 44px; background: rgba(30,41,59,0.9);" title="Swap Next Bubble">
+        <span class="powerup-icon" style="font-size: 18px;">🔄</span>
+      </div>
+
+      <!-- Rainbow Bubble -->
+      <div class="powerup-btn" id="btn-powerup-rainbow" title="Afro Rainbow!">
+        <span class="powerup-icon">🌈</span>
+        <span class="powerup-count" id="count-powerup-rainbow">2</span>
+      </div>
+
+      <!-- Aim Helper -->
+      <div class="powerup-btn" id="btn-powerup-aim" title="Sharp Eye Aim Line!">
+        <span class="powerup-icon">🎯</span>
+        <span class="powerup-count" id="count-powerup-aim">3</span>
+      </div>
+    </div>
+
+    <!-- Screen Layer: Level Saga Map -->
+    <section class="screen-layer" id="screen-map">
+      <div class="menu-header">
+        <div class="menu-title-wrap">
+          <span style="font-size: 20px;">🇳🇬</span>
+          <div>
+            <div class="menu-title">Naija Pop</div>
+            <div style="font-size: 10px; color: #10b981; font-weight: 700;">50 LEVELS SAGA</div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <!-- Lives counter & timer -->
+          <div class="currency-badge hud-interactive" id="btn-map-lives" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239,68,68,0.4); color: #fca5a5;">
+            <span>❤️</span>
+            <span id="map-lives-count">5</span>
+            <span id="map-lives-timer" style="font-size: 9px; opacity: 0.8; margin-left: 2px;">FULL</span>
+          </div>
+
+          <!-- Coins -->
+          <div class="currency-badge hud-interactive" id="btn-open-shop">
+            <span>🪙</span>
+            <span id="map-coins-count">250</span>
+            <span style="font-size: 10px; color: #fbbf24;">+</span>
+          </div>
+
+          <!-- Daily Gift -->
+          <button class="icon-btn" id="btn-daily-reward" title="Daily Streak Gift">
+            <span>🎁</span>
+          </button>
+
+          <!-- Settings -->
+          <button class="icon-btn" id="btn-map-settings" title="Settings">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px;">
+              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Map Scroll View -->
+      <div id="level-map-scroll">
+        <!-- Generated Level Nodes will be injected here via game.js -->
+      </div>
+    </section>
+
+    <!-- Modal: Level Launch Preview -->
+    <div class="modal-backdrop hidden" id="modal-level-preview">
+      <div class="modal-card">
+        <div style="font-size: 40px; margin-bottom: 6px;" id="preview-icon">🏝️</div>
+        <h2 class="modal-title" id="preview-title">Level 1: Eko Atlantic</h2>
+        <p class="modal-subtitle" id="preview-zone">Lagos Island Zone</p>
+
+        <div style="display: flex; justify-content: space-around; width: 100%; margin: 10px 0 16px; background: #0f172a; padding: 12px; border-radius: 14px;">
+          <div>
+            <div style="font-size: 11px; color: #94a3b8;">TARGET</div>
+            <div style="font-size: 15px; font-weight: 800; color: #facc15;" id="preview-target">1,200 pts</div>
+          </div>
+          <div style="width: 1px; background: #334155;"></div>
+          <div>
+            <div style="font-size: 11px; color: #94a3b8;">SHOTS</div>
+            <div style="font-size: 15px; font-weight: 800; color: #34d399;" id="preview-shots">25 Bubbles</div>
+          </div>
+          <div style="width: 1px; background: #334155;"></div>
+          <div>
+            <div style="font-size: 11px; color: #94a3b8;">BEST</div>
+            <div style="font-size: 15px; font-weight: 800; color: #60a5fa;" id="preview-stars">★★★</div>
+          </div>
+        </div>
+
+        <button class="action-btn btn-primary" id="btn-start-level">
+          <span>OYA PLAY!</span>
+          <span style="font-size: 12px; opacity: 0.85;">(Costs 1 ❤️)</span>
+        </button>
+        <button class="action-btn btn-secondary" id="btn-close-preview">Back to Map</button>
+      </div>
+    </div>
+
+    <!-- Modal: Level Victory (Win) -->
+    <div class="modal-backdrop hidden" id="modal-win">
+      <div class="modal-card">
+        <div style="font-size: 32px; margin-bottom: 2px;">🎉</div>
+        <h2 class="modal-title" style="color: #34d399;" id="win-title">Oshey! Correct Person!</h2>
+        <p class="modal-subtitle" id="win-subtitle">Level Completed with Style!</p>
+
+        <!-- Star Celebration -->
+        <div style="display: flex; gap: 8px; font-size: 38px; margin: 6px 0 12px;" id="win-stars">
+          <span class="star-filled">★</span>
+          <span class="star-filled">★</span>
+          <span class="star-empty">★</span>
+        </div>
+
+        <div style="background: #0f172a; width: 100%; border-radius: 14px; padding: 12px; margin-bottom: 14px; text-align: left;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+            <span style="color: #94a3b8;">Final Score</span>
+            <span style="font-weight: 800; color: #facc15;" id="win-score">3,450</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+            <span style="color: #94a3b8;">Coins Earned</span>
+            <span style="font-weight: 800; color: #fbbf24;" id="win-coins">+75 🪙</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px;">
+            <span style="color: #94a3b8;">Shots Remaining</span>
+            <span style="font-weight: 800; color: #34d399;" id="win-remaining-shots">6 (Bonus!)</span>
+          </div>
+        </div>
+
+        <button class="action-btn btn-primary" id="btn-next-level">Next Level ➔</button>
+        <button class="action-btn btn-secondary" id="btn-replay-win">Replay Level</button>
+        <button class="action-btn btn-secondary" id="btn-map-win">Map Screen</button>
+      </div>
+    </div>
+
+    <!-- Modal: Game Over -->
+    <div class="modal-backdrop hidden" id="modal-gameover">
+      <div class="modal-card">
+        <div style="font-size: 38px; margin-bottom: 2px;">💥</div>
+        <h2 class="modal-title" style="color: #ef4444;" id="gameover-title">Wahala Dey!</h2>
+        <p class="modal-subtitle" id="gameover-reason">Bubbles crossed the foul line!</p>
+
+        <!-- Rewarded Ad Option: Extra Shots -->
+        <button class="action-btn btn-ad" id="btn-ad-revive">
+          <span>📺 Watch Ad for +5 Extra Shots</span>
+        </button>
+
+        <button class="action-btn btn-primary" id="btn-try-again">Try Again (-1 ❤️)</button>
+        <button class="action-btn btn-secondary" id="btn-map-gameover">Give Up to Map</button>
+      </div>
+    </div>
+
+    <!-- Modal: Pause -->
+    <div class="modal-backdrop hidden" id="modal-pause">
+      <div class="modal-card">
+        <h2 class="modal-title">Game Paused</h2>
+        <p class="modal-subtitle">Take a breather, chief!</p>
+
+        <button class="action-btn btn-primary" id="btn-resume">Resume Game</button>
+        <button class="action-btn btn-secondary" id="btn-restart-pause">Restart Level</button>
+        <button class="action-btn btn-secondary" id="btn-quit-map">Exit to Map</button>
+      </div>
+    </div>
+
+    <!-- Modal: Daily Streak Reward -->
+    <div class="modal-backdrop hidden" id="modal-daily">
+      <div class="modal-card" style="max-width: 380px;">
+        <div style="font-size: 34px;">🎁</div>
+        <h2 class="modal-title">Daily Naija Blessing</h2>
+        <p class="modal-subtitle">Log in 7 days in a row for big flex rewards!</p>
+
+        <div class="streak-grid" id="daily-streak-container">
+          <!-- Injected via game.js -->
+        </div>
+
+        <button class="action-btn btn-primary" id="btn-claim-daily">Claim Today's Reward!</button>
+        <button class="action-btn btn-secondary" id="btn-close-daily">Close</button>
+      </div>
+    </div>
+
+    <!-- Modal: Shop -->
+    <div class="modal-backdrop hidden" id="modal-shop">
+      <div class="modal-card" style="max-width: 380px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 12px;">
+          <h2 class="modal-title" style="margin: 0;">Market Stall</h2>
+          <div class="currency-badge">
+            <span>🪙</span>
+            <span id="shop-coin-balance">250</span>
+          </div>
+        </div>
+
+        <div class="shop-list">
+          <div class="shop-item">
+            <div class="shop-item-info">
+              <div class="shop-item-icon">💣</div>
+              <div>
+                <div class="shop-item-title">3x Oya Bomb</div>
+                <div class="shop-item-desc">Blows up big bubble radius</div>
+              </div>
+            </div>
+            <button class="shop-buy-btn" data-item="bomb" data-cost="150">150 🪙</button>
+          </div>
+
+          <div class="shop-item">
+            <div class="shop-item-info">
+              <div class="shop-item-icon">🌈</div>
+              <div>
+                <div class="shop-item-title">2x Afro Rainbow</div>
+                <div class="shop-item-desc">Matches with any bubble color</div>
+              </div>
+            </div>
+            <button class="shop-buy-btn" data-item="rainbow" data-cost="200">200 🪙</button>
+          </div>
+
+          <div class="shop-item">
+            <div class="shop-item-info">
+              <div class="shop-item-icon">🎯</div>
+              <div>
+                <div class="shop-item-title">5x Sharp Eye</div>
+                <div class="shop-item-desc">Full bounce laser trajectory</div>
+              </div>
+            </div>
+            <button class="shop-buy-btn" data-item="aim" data-cost="100">100 🪙</button>
+          </div>
+
+          <div class="shop-item">
+            <div class="shop-item-info">
+              <div class="shop-item-icon">❤️</div>
+              <div>
+                <div class="shop-item-title">Refill 5 Lives</div>
+                <div class="shop-item-desc">Get back into the game now</div>
+              </div>
+            </div>
+            <button class="shop-buy-btn" data-item="lives" data-cost="120">120 🪙</button>
+          </div>
+
+          <div class="shop-item" style="border-color: #8b5cf6;">
+            <div class="shop-item-info">
+              <div class="shop-item-icon" style="background: rgba(139, 92, 246, 0.2);">📺</div>
+              <div>
+                <div class="shop-item-title">Watch Video Ad</div>
+                <div class="shop-item-desc">Free 100 Coins reward</div>
+              </div>
+            </div>
+            <button class="shop-buy-btn" id="btn-shop-ad" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">FREE</button>
+          </div>
+        </div>
+
+        <button class="action-btn btn-secondary" id="btn-close-shop">Close Market</button>
+      </div>
+    </div>
+
+    <!-- Modal: Settings -->
+    <div class="modal-backdrop hidden" id="modal-settings">
+      <div class="modal-card">
+        <h2 class="modal-title">Settings</h2>
+        <p class="modal-subtitle">Audio, Haptics & Rules</p>
+
+        <div class="setting-row">
+          <span style="font-weight: 700;">Sound Effects</span>
+          <label class="switch">
+            <input type="checkbox" id="setting-sound" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <span style="font-weight: 700;">Haptic Vibration</span>
+          <label class="switch">
+            <input type="checkbox" id="setting-vibration" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div style="background: #0f172a; width: 100%; border-radius: 12px; padding: 12px; margin: 12px 0; text-align: left; font-size: 11px; color: #94a3b8; line-height: 1.5;">
+          <div style="font-weight: 800; color: #fff; margin-bottom: 4px;">🎮 How to Play Naija Pop:</div>
+          • Drag on screen to aim your bubble cannon with the dotted guide line.<br>
+          • Release to shoot! Match 3 or more bubbles of same color.<br>
+          • Floating bubbles with no top support drop for massive combo bonus!<br>
+          • Tap the swap button to switch loaded and next bubble.<br>
+          • Clear the level target before running out of shots or reaching the foul line!
+        </div>
+
+        <button class="action-btn btn-secondary" id="btn-reset-data" style="color: #ef4444; border-color: rgba(239,68,68,0.3); font-size: 12px;">Reset Saved Game Data</button>
+        <button class="action-btn btn-primary" id="btn-close-settings">Done</button>
+      </div>
+    </div>
+
+    <!-- Modal: Mock Rewarded Ad Overlay -->
+    <div class="modal-backdrop hidden" id="modal-ad-interstitial" style="z-index: 200; background: rgba(0,0,0,0.92);">
+      <div class="modal-card" style="border: 2px solid #8b5cf6;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 11px; text-transform: uppercase; color: #a78bfa; font-weight: 800; letter-spacing: 1px;">Ad Preview (AdMob Ready)</span>
+          <span style="font-size: 13px; font-weight: 900; background: #334155; padding: 2px 8px; border-radius: 6px;" id="ad-timer-text">3s</span>
+        </div>
+
+        <div style="width: 100%; height: 180px; background: linear-gradient(135deg, #1e1b4b, #312e81); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; border: 1px solid #4338ca;">
+          <div style="font-size: 42px; margin-bottom: 8px;" id="ad-sponsor-emoji">🍲</div>
+          <div style="font-size: 18px; font-weight: 900; color: #fef08a;" id="ad-sponsor-title">Naija Jollof Kitchen</div>
+          <div style="font-size: 12px; color: #cbd5e1; margin-top: 4px;" id="ad-sponsor-desc">The authentic smoky flavor of Lagos!</div>
+        </div>
+
+        <div style="font-size: 12px; color: #94a3b8; margin: 12px 0 4px;" id="ad-status-msg">Watching sponsored video to claim reward...</div>
+        <button class="action-btn btn-ad hidden" id="btn-claim-ad-reward">Claim Your Reward!</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

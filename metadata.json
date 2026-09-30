@@ -1,0 +1,6 @@
+{
+  "name": "Naija Pop - Bubble Shooter",
+  "description": "Vibrant mobile-first bubble shooter game with 50 levels, power-ups, Nigerian themes, and smooth 60fps arcade action.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
